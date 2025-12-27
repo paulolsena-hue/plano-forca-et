@@ -1,401 +1,389 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { 
-  History, 
-  ClipboardList, 
-  CheckCircle2, 
-  Circle, 
-  RefreshCcw, 
-  Sun, 
-  BatteryLow, 
-  Activity, 
-  Palette,
-  Trophy,
-  TrendingUp,
-  BarChart3,
-  Save,
-  LayoutDashboard,
-  Timer,
-  Clock,
-  Flame,
-  Wind,
-  Trash2,
-  Plus,
-  Calendar
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plano de Força - Assistente ET</title>
+    <!-- Bibliotecas Necessárias -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 
-export default function App() {
-  const [currentTab, setCurrentTab] = useState('A');
-  const [exercises, setExercises] = useState({ A: [], B: [] });
-  const [dayCondition, setDayCondition] = useState('Normal'); 
-  const [theme, setTheme] = useState('dark'); 
-  const [loading, setLoading] = useState(true);
-  const [showHistory, setShowHistory] = useState(null);
-  const [logs, setLogs] = useState([]);
-  const [view, setView] = useState('workout'); 
-  const [message, setMessage] = useState(null);
-  
-  // Data do treino para salvamento
-  const [workoutDate, setWorkoutDate] = useState(new Date().toISOString().split('T')[0]);
-  
-  const [seconds, setSeconds] = useState(0);
-  const [isTimerActive, setIsTimerActive] = useState(false);
-  const timerRef = useRef(null);
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap');
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .animate-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-  // --- CONFIGURAÇÃO DE TEMAS ---
-  const themeStyles = {
-    dark: {
-      bg: "bg-slate-950",
-      card: "bg-slate-900 border-slate-800",
-      text: "text-white", // Fonte branca solicitado
-      subtext: "text-slate-400",
-      header: "bg-slate-950/90 border-red-900/50",
-      headerTitle: "text-red-600 font-black italic", // Cabeçalho vermelho solicitado
-      input: "bg-slate-800 border-slate-700 text-white",
-      accent: "text-red-500",
-      buttonActive: "bg-red-700 text-white shadow-red-900/40",
-      icon: "text-red-600"
-    },
-    light: {
-      bg: "bg-blue-50", // Fundo Azul Claro solicitado
-      cardDefault: "bg-white border-blue-100 shadow-sm",
-      text: "text-slate-800",
-      subtext: "text-slate-500",
-      header: "bg-white/90 border-blue-200",
-      headerTitle: "text-blue-700 font-black",
-      input: "bg-white border-blue-200",
-      accent: "text-blue-600",
-      buttonActive: "bg-blue-600 text-white shadow-blue-200",
-      icon: "text-blue-600"
-    },
-    medical: {
-      bg: "bg-[#f0f4f8]",
-      card: "bg-white border-blue-100 shadow-sm",
-      text: "text-slate-800",
-      subtext: "text-blue-400",
-      header: "bg-[#f0f4f8]/90 border-blue-200",
-      headerTitle: "text-blue-600 font-bold",
-      input: "bg-blue-50 border-blue-100",
-      accent: "text-blue-600",
-      buttonActive: "bg-blue-700 text-white",
-      icon: "text-blue-600"
-    }
-  };
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef, Fragment } = React;
 
-  const s = themeStyles[theme] || themeStyles.dark;
+        // Componente de Ícone Interno corrigido para evitar erro de elementos adjacentes
+        const Icon = ({ name, size = 20, className = "" }) => {
+            const icons = {
+                History: <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8m0 0V3m0 5h5M12 7v5l4 2" />,
+                ClipboardList: <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 2h6M12 2v4M8 12h8M8 16h8M8 8h8" />,
+                CheckCircle2: <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM9 12l2 2 4-4" />,
+                Circle: <circle cx="12" cy="12" r="10" />,
+                RefreshCcw: <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8m0 0V3m0 5h5M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16m0 0v5m0-5h-5" />,
+                Sun: <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z" />,
+                BatteryLow: (
+                    <Fragment>
+                        <path d="M12 10.5V13.5M16 10.5V13.5M7 10.5V13.5M10 10.5V13.5" />
+                        <rect width="16" height="10" x="2" y="7" rx="2" />
+                        <rect width="2" height="4" x="18" y="10" rx="1" />
+                    </Fragment>
+                ),
+                Activity: <path d="M22 12h-4l-3 9L9 3l-3 9H2" />,
+                Palette: <path d="M12 20a8 8 0 1 0-8-8c0 1.5 1 2.5 2 3.5s1 2 1 2.5a1 1 0 0 0 1 1M11 9a1 1 0 1 1-2 0 1 1 0 0 1 2 0m4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m2 4a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />,
+                Trophy: <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-2.34M12 2v12.66" />,
+                TrendingUp: <path d="m22 7-8.5 8.5-5-5L2 17M16 7h6v6" />,
+                BarChart3: <path d="M18 20V10M12 20V4M6 20v-6M2 20h20" />,
+                Save: <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8" />,
+                LayoutDashboard: (
+                    <Fragment>
+                        <rect width="7" height="9" x="3" y="3" rx="1" />
+                        <rect width="7" height="5" x="14" y="3" rx="1" />
+                        <rect width="7" height="9" x="14" y="12" rx="1" />
+                        <rect width="7" height="5" x="3" y="16" rx="1" />
+                    </Fragment>
+                ),
+                Timer: <path d="M10 2h4M12 14l3-3M12 22a8 8 0 1 0 0-16 8 8 0 0 0 0 16z" />,
+                Clock: (
+                    <Fragment>
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 6v6l4 2" />
+                    </Fragment>
+                ),
+                Flame: <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />,
+                Wind: <path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2M9.6 4.6A2 2 0 1 1 11 8H2M12.6 19.4A2 2 0 1 0 14 16H2" />,
+                Trash2: <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" />,
+                Plus: <path d="M12 5v14M5 12h14" />,
+                Calendar: (
+                    <Fragment>
+                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                        <path d="M16 2v4M8 2v4M3 10h18" />
+                    </Fragment>
+                )
+            };
 
-  // --- PERSISTÊNCIA OFFLINE ---
-  useEffect(() => {
-    const savedConfig = localStorage.getItem('et_force_config_v3');
-    const savedLogs = localStorage.getItem('et_force_logs_v3');
+            return (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width={size}
+                    height={size}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={className}
+                >
+                    {icons[name] || <circle cx="12" cy="12" r="10" />}
+                </svg>
+            );
+        };
 
-    if (savedConfig) {
-      const data = JSON.parse(savedConfig);
-      setExercises(data.exercises);
-      setDayCondition(data.dayCondition || 'Normal');
-      setTheme(data.theme || 'dark');
-    } else {
-      const createWorkout = (type) => [
-        { id: `w_${type}`, nome: "Aquecimento 10 min", series: 1, reps: 10, carga: 0, concluido: false, type: 'prep' },
-        ...(type === 'A' ? [
-          { id: '1', nome: "Leg Press", series: 3, reps: 12, carga: 70, lastIncrease: null, concluido: false },
-          { id: '2', nome: "Supino Inclinado", series: 3, reps: 12, carga: 7, lastIncrease: null, concluido: false },
-          { id: '3', nome: "Supino Reto", series: 3, reps: 12, carga: 8, lastIncrease: null, concluido: false },
-          { id: '4', nome: "Agachamento", series: 3, reps: 12, carga: 4, lastIncrease: null, concluido: false },
-          { id: '5', nome: "Extensão de Joelhos", series: 3, reps: 15, carga: 60, lastIncrease: null, concluido: false },
-          { id: '6', nome: "Tríceps Francês", series: 3, reps: 12, carga: 4, lastIncrease: null, concluido: false },
-        ] : [
-          { id: '10', nome: "Remada Baixa", series: 3, reps: 12, carga: 50, lastIncrease: null, concluido: false },
-          { id: '11', nome: "Voador Inverso", series: 3, reps: 12, carga: 30, lastIncrease: null, concluido: false },
-          { id: '12', nome: "Passada Alternada", series: 3, reps: 12, carga: 0, lastIncrease: null, concluido: false },
-          { id: '15', nome: "Flexão de Joelhos", series: 3, reps: 15, carga: 60, lastIncrease: null, concluido: false },
-        ]),
-        { id: `s_${type}`, nome: "Alongamento Final", series: 1, reps: 10, carga: 0, concluido: false, type: 'prep' }
-      ];
-      setExercises({ A: createWorkout('A'), B: createWorkout('B') });
-    }
-    if (savedLogs) setLogs(JSON.parse(savedLogs));
-    setLoading(false);
-  }, []);
+        function App() {
+            const [currentTab, setCurrentTab] = useState('A');
+            const [exercises, setExercises] = useState({ A: [], B: [] });
+            const [dayCondition, setDayCondition] = useState('Normal'); 
+            const [theme, setTheme] = useState('dark'); 
+            const [loading, setLoading] = useState(true);
+            const [showHistory, setShowHistory] = useState(null);
+            const [logs, setLogs] = useState([]);
+            const [view, setView] = useState('workout'); 
+            const [message, setMessage] = useState(null);
+            const [workoutDate, setWorkoutDate] = useState(new Date().toISOString().split('T')[0]);
+            const [seconds, setSeconds] = useState(0);
+            const [isTimerActive, setIsTimerActive] = useState(false);
+            const timerRef = useRef(null);
 
-  useEffect(() => {
-    if (!loading) localStorage.setItem('et_force_config_v3', JSON.stringify({ exercises, dayCondition, theme }));
-  }, [exercises, dayCondition, theme, loading]);
+            const themeStyles = {
+                dark: {
+                    bg: "bg-slate-950",
+                    header: "bg-slate-950/90 border-red-900/50",
+                    headerTitle: "text-red-600 font-black italic",
+                    cardEven: "bg-slate-900 border-slate-800",
+                    cardOdd: "bg-slate-900/80 border-slate-800/50",
+                    text: "text-white",
+                    subtext: "text-slate-400",
+                    input: "bg-slate-800 border-slate-700 text-white",
+                    buttonActive: "bg-red-700 text-white"
+                },
+                light: {
+                    bg: "bg-blue-50",
+                    header: "bg-white/90 border-blue-200",
+                    headerTitle: "text-blue-700 font-black",
+                    cardEven: "bg-white border-blue-100", 
+                    cardOdd: "bg-blue-100/40 border-blue-200",
+                    text: "text-slate-800",
+                    subtext: "text-slate-500",
+                    input: "bg-white border-blue-200",
+                    buttonActive: "bg-blue-600 text-white"
+                },
+                medical: {
+                    bg: "bg-[#f0f4f8]",
+                    header: "bg-[#f0f4f8]/90 border-blue-200",
+                    headerTitle: "text-blue-600 font-bold",
+                    cardEven: "bg-white border-blue-100",
+                    cardOdd: "bg-blue-50/50 border-blue-200",
+                    text: "text-slate-800",
+                    subtext: "text-blue-400",
+                    input: "bg-blue-50 border-blue-100",
+                    buttonActive: "bg-blue-700 text-white"
+                }
+            };
 
-  useEffect(() => {
-    if (!loading) localStorage.setItem('et_force_logs_v3', JSON.stringify(logs));
-  }, [logs, loading]);
+            const s = themeStyles[theme] || themeStyles.dark;
 
-  // --- TIMER ---
-  useEffect(() => {
-    if (isTimerActive) {
-      timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
-    } else {
-      clearInterval(timerRef.current);
-    }
-    return () => clearInterval(timerRef.current);
-  }, [isTimerActive]);
+            useEffect(() => {
+                const savedConfig = localStorage.getItem('et_force_vercel_config_v5');
+                const savedLogs = localStorage.getItem('et_force_vercel_logs_v5');
 
-  const formatTime = (totalSeconds) => {
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+                if (savedConfig) {
+                    const data = JSON.parse(savedConfig);
+                    setExercises(data.exercises);
+                    setDayCondition(data.dayCondition || 'Normal');
+                    setTheme(data.theme || 'dark');
+                } else {
+                    const createWorkout = (type) => [
+                        { id: `w_${type}`, nome: "Aquecimento 10 min", series: 1, reps: 10, carga: 0, concluido: false, type: 'prep' },
+                        { id: Date.now() + Math.random(), nome: type === 'A' ? "Leg Press" : "Puxada Alta", series: 3, reps: 12, carga: 10, concluido: false },
+                        { id: `s_${type}`, nome: "Alongamento Final", series: 1, reps: 10, carga: 0, concluido: false, type: 'prep' }
+                    ];
+                    setExercises({ A: createWorkout('A'), B: createWorkout('B') });
+                }
+                if (savedLogs) setLogs(JSON.parse(savedLogs));
+                setLoading(false);
+            }, []);
 
-  // --- ACTIONS ---
-  const notify = (msg) => {
-    setMessage(msg);
-    setTimeout(() => setMessage(null), 3000);
-  };
+            useEffect(() => {
+                if (!loading) localStorage.setItem('et_force_vercel_config_v5', JSON.stringify({ exercises, dayCondition, theme }));
+            }, [exercises, dayCondition, theme, loading]);
 
-  const addExercise = () => {
-    const newEx = {
-      id: Date.now().toString(),
-      nome: "Novo Exercício",
-      series: 3,
-      reps: 12,
-      carga: 0,
-      lastIncrease: null,
-      concluido: false
-    };
-    const updated = { ...exercises };
-    // Adiciona antes do alongamento se existir
-    const stretchIdx = updated[currentTab].findIndex(e => e.id.startsWith('s_'));
-    if (stretchIdx !== -1) {
-      updated[currentTab].splice(stretchIdx, 0, newEx);
-    } else {
-      updated[currentTab].push(newEx);
-    }
-    setExercises(updated);
-    notify("Exercício adicionado!");
-  };
+            useEffect(() => {
+                if (!loading) localStorage.setItem('et_force_vercel_logs_v5', JSON.stringify(logs));
+            }, [logs, loading]);
 
-  const removeExercise = (id) => {
-    const updated = { ...exercises };
-    updated[currentTab] = updated[currentTab].filter(e => e.id !== id);
-    setExercises(updated);
-    notify("Exercício removido.");
-  };
+            useEffect(() => {
+                if (isTimerActive) {
+                    timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
+                } else {
+                    clearInterval(timerRef.current);
+                }
+                return () => clearInterval(timerRef.current);
+            }, [isTimerActive]);
 
-  const updateEx = (id, field, value) => {
-    if (field === 'concluido' && value === true && !isTimerActive) setIsTimerActive(true);
-    const newEx = { ...exercises };
-    const list = [...newEx[currentTab]];
-    const idx = list.findIndex(e => e.id === id);
-    if (field === 'carga' && value > list[idx].carga) list[idx].lastIncrease = new Date().toISOString();
-    list[idx][field] = value;
-    newEx[currentTab] = list;
-    setExercises(newEx);
-  };
+            const notify = (msg) => {
+                setMessage(msg);
+                setTimeout(() => setMessage(null), 3000);
+            };
 
-  const saveWorkout = () => {
-    const session = {
-      id: Date.now(),
-      date: new Date(workoutDate).toISOString(),
-      type: currentTab,
-      condition: dayCondition,
-      duration: seconds,
-      data: exercises[currentTab].filter(e => e.concluido).map(e => ({ id: e.id, nome: e.nome, carga: e.carga }))
-    };
-    setLogs([session, ...logs]);
-    const newEx = { ...exercises };
-    newEx[currentTab] = newEx[currentTab].map(e => ({ ...e, concluido: false }));
-    setExercises(newEx);
-    setIsTimerActive(false);
-    setSeconds(0);
-    notify("Protocolo Salvo!");
-  };
+            const addExercise = () => {
+                const newEx = { id: Date.now().toString(), nome: "Novo Exercício", series: 3, reps: 12, carga: 0, concluido: false };
+                const updated = { ...exercises };
+                const stretchIdx = updated[currentTab].findIndex(e => e.id.startsWith('s_'));
+                if (stretchIdx !== -1) updated[currentTab].splice(stretchIdx, 0, newEx);
+                else updated[currentTab].push(newEx);
+                setExercises(updated);
+                notify("Exercício adicionado!");
+            };
 
-  const progressPercent = useMemo(() => {
-    const list = exercises[currentTab] || [];
-    const done = list.filter(e => e.concluido).length;
-    return list.length ? Math.round((done / list.length) * 100) : 0;
-  }, [exercises, currentTab]);
+            const removeExercise = (id) => {
+                const updated = { ...exercises };
+                updated[currentTab] = updated[currentTab].filter(e => e.id !== id);
+                setExercises(updated);
+                notify("Exercício removido.");
+            };
 
-  if (loading) return null;
+            const updateEx = (id, field, value) => {
+                if (field === 'concluido' && value === true && !isTimerActive) setIsTimerActive(true);
+                const newEx = { ...exercises };
+                const list = [...newEx[currentTab]];
+                const idx = list.findIndex(e => e.id === id);
+                if (field === 'carga' && value > list[idx].carga) list[idx].lastIncrease = new Date().toISOString();
+                list[idx][field] = value;
+                newEx[currentTab] = list;
+                setExercises(newEx);
+            };
 
-  return (
-    <div className={`min-h-screen ${s.bg} ${s.text} pb-24 font-sans transition-colors duration-500`}>
-      
-      {message && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white px-6 py-2 rounded-full shadow-lg text-xs font-bold animate-bounce">
-          {message}
-        </div>
-      )}
+            const saveWorkout = () => {
+                const session = {
+                    id: Date.now(),
+                    date: new Date(workoutDate).toISOString(),
+                    type: currentTab,
+                    condition: dayCondition,
+                    duration: seconds,
+                    data: exercises[currentTab].filter(e => e.concluido).map(e => ({ id: e.id, nome: e.nome, carga: e.carga }))
+                };
+                setLogs([session, ...logs]);
+                const newEx = { ...exercises };
+                newEx[currentTab] = newEx[currentTab].map(e => ({ ...e, concluido: false }));
+                setExercises(newEx);
+                setIsTimerActive(false);
+                setSeconds(0);
+                notify("Treino salvo com sucesso!");
+            };
 
-      {/* Header */}
-      <div className={`sticky top-0 z-30 ${s.header} backdrop-blur-md border-b p-4 shadow-sm`}>
-        <div className="max-w-md mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setTheme(t => t === 'dark' ? 'light' : t === 'light' ? 'medical' : 'dark')} className={`p-2 rounded-xl ${s.input}`}><Palette size={18} /></button>
-            <div>
-              <h1 className={`text-lg tracking-tighter uppercase leading-none ${s.headerTitle}`}>Plano de Força</h1>
-              <div className="flex items-center gap-1.5 opacity-50">
-                <span className={`text-[8px] font-bold uppercase tracking-widest ${theme === 'dark' ? 'text-white' : ''}`}>Protocolo ET Offline</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex gap-1 bg-black/10 p-1 rounded-xl">
-            {['A', 'B'].map(t => (
-              <button key={t} onClick={() => setCurrentTab(t)} className={`px-4 py-1.5 rounded-lg text-[10px] font-black transition-all ${currentTab === t ? s.buttonActive : 'opacity-40'}`}>{t}</button>
-            ))}
-          </div>
-        </div>
-      </div>
+            const formatTime = (s) => `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+            const progress = useMemo(() => {
+                const list = exercises[currentTab] || [];
+                return list.length ? Math.round((list.filter(e => e.concluido).length / list.length) * 100) : 0;
+            }, [exercises, currentTab]);
 
-      <main className="max-w-md mx-auto p-4 space-y-4">
-        {view === 'workout' ? (
-          <>
-            {/* Cronómetro e Condição */}
-            <div className="grid grid-cols-4 gap-2">
-              <div className={`col-span-1 flex flex-col items-center justify-center p-3 rounded-2xl border border-dashed ${isTimerActive ? 'border-blue-500/50 bg-blue-500/5' : 'border-stone-300'}`}>
-                <Timer size={16} className={isTimerActive ? 'text-blue-500 animate-pulse' : 'opacity-30'} />
-                <span className="text-[10px] font-black mt-1">{formatTime(seconds)}</span>
-              </div>
-              {['Normal', 'Calor', 'Cansado'].map(c => (
-                <button key={c} onClick={() => handleConditionChange(c)} className={`flex flex-col items-center p-3 rounded-2xl border transition-all ${dayCondition === c ? 'border-blue-500 bg-blue-500/10 text-blue-500 font-bold' : 'border-transparent opacity-30'}`}>
-                  {c === 'Normal' ? <Activity size={16}/> : c === 'Calor' ? <Sun size={16}/> : <BatteryLow size={16}/>}
-                  <span className="text-[8px] font-black uppercase mt-1">{c}</span>
-                </button>
-              ))}
-            </div>
+            if (loading) return null;
 
-            {/* Seletor de Data */}
-            <div className={`flex items-center gap-3 p-4 rounded-3xl ${s.card} border-dashed border-2`}>
-              <Calendar size={18} className="text-blue-500" />
-              <div className="flex-1">
-                <span className="text-[7px] font-black uppercase opacity-50 block">Data da Sessão</span>
-                <input 
-                  type="date" 
-                  value={workoutDate} 
-                  onChange={(e) => setWorkoutDate(e.target.value)}
-                  className="bg-transparent font-black text-xs outline-none w-full"
-                />
-              </div>
-            </div>
-
-            {/* Barra de Progresso */}
-            <div className={`p-4 rounded-3xl bg-black/5 border ${theme === 'dark' ? 'border-slate-800' : 'border-stone-200'}`}>
-              <div className="flex justify-between text-[8px] font-black uppercase mb-1 opacity-50">
-                <span>Eficiência do Plano</span>
-                <span>{progressPercent}%</span>
-              </div>
-              <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden">
-                <div className={`h-full transition-all duration-700 ${theme === 'dark' ? 'bg-red-600' : 'bg-blue-600'}`} style={{ width: `${progressPercent}%` }} />
-              </div>
-            </div>
-
-            {exercises[currentTab]?.map((ex, idx) => {
-              // Alternância de cores no Light (Azul / Branco)
-              let cardClass = s.card;
-              if (theme === 'light') {
-                cardClass = idx % 2 === 0 ? "bg-white border-blue-100" : "bg-blue-100/40 border-blue-200";
-              }
-
-              return (
-                <div key={ex.id} className={`p-5 rounded-[2.2rem] border transition-all ${ex.concluido ? 'opacity-30 grayscale' : cardClass} ${ex.type === 'prep' ? 'border-dashed' : ''}`}>
-                  <div className="flex items-start gap-4">
-                    <button onClick={() => updateEx(ex.id, 'concluido', !ex.concluido)} className={ex.concluido ? 'text-green-500' : (theme === 'dark' ? 'text-slate-600' : s.icon)}>
-                      {ex.concluido ? <CheckCircle2 size={26}/> : <Circle size={26}/>}
-                    </button>
-                    <div className="flex-1">
-                      <div className="flex justify-between mb-3">
-                        <div className="flex items-center gap-2 w-full pr-4">
-                          {ex.type === 'prep' && (ex.id.startsWith('w') ? <Flame size={14} className="text-orange-600"/> : <Clock size={14} className="text-stone-600"/>)}
-                          <input 
-                            type="text" 
-                            value={ex.nome} 
-                            onChange={(e) => updateEx(ex.id, 'nome', e.target.value)}
-                            className="bg-transparent font-black text-sm uppercase tracking-tight outline-none w-full focus:underline"
-                          />
+            return (
+                <div className={`min-h-screen ${s.bg} ${s.text} pb-24 transition-colors duration-500`}>
+                    {message && (
+                        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white px-6 py-2 rounded-full shadow-lg text-xs font-bold animate-bounce">
+                            {message}
                         </div>
-                        <div className="flex gap-2">
-                          <button onClick={() => setShowHistory(showHistory === ex.id ? null : ex.id)} className="opacity-30"><TrendingUp size={14}/></button>
-                          {ex.type !== 'prep' && (
-                            <button onClick={() => removeExercise(ex.id)} className="opacity-20 text-red-500"><Trash2 size={14}/></button>
-                          )}
+                    )}
+
+                    <div className={`sticky top-0 z-30 ${s.header} backdrop-blur-md border-b p-4 shadow-sm`}>
+                        <div className="max-w-md mx-auto flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => setTheme(t => t === 'dark' ? 'light' : t === 'light' ? 'medical' : 'dark')} className={`p-2 rounded-xl ${s.input}`}>
+                                    <Icon name="Palette" size={18} className={theme === 'dark' ? 'text-red-500' : 'text-blue-500'}/>
+                                </button>
+                                <div>
+                                    <h1 className={`text-lg tracking-tighter uppercase leading-none ${s.headerTitle}`}>Plano de Força</h1>
+                                    <p className="text-[8px] font-bold opacity-50 uppercase tracking-widest italic">Assistente ET Vercel</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-1 bg-black/10 p-1 rounded-xl">
+                                {['A', 'B'].map(t => (
+                                    <button key={t} onClick={() => setCurrentTab(t)} className={`px-4 py-1.5 rounded-lg text-[10px] font-black transition-all ${currentTab === t ? s.buttonActive : 'opacity-40'}`}>{t}</button>
+                                ))}
+                            </div>
                         </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className={`${s.input} p-2 rounded-xl text-center`}>
-                          <span className="text-[7px] font-black uppercase opacity-40 block">{ex.type === 'prep' ? 'Min' : 'Sets'}</span>
-                          <input 
-                            type="number" 
-                            value={ex.series}
-                            onChange={(e) => updateEx(ex.id, 'series', parseInt(e.target.value) || 0)}
-                            className="bg-transparent font-bold text-xs w-full text-center outline-none"
-                          />
-                        </div>
-                        <div className={`${s.input} p-2 rounded-xl text-center`}>
-                          <span className="text-[7px] font-black uppercase opacity-40 block">Reps</span>
-                          <input 
-                            type="number" 
-                            value={ex.reps}
-                            onChange={(e) => updateEx(ex.id, 'reps', parseInt(e.target.value) || 0)}
-                            className="bg-transparent font-bold text-xs w-full text-center outline-none"
-                          />
-                        </div>
-                        <div className={`${ex.type === 'prep' ? 'opacity-10 pointer-events-none' : 'bg-blue-500/10 border border-blue-500/20'} p-2 rounded-xl text-center`}>
-                          <span className={`text-[7px] font-black uppercase block ${theme === 'dark' ? 'text-red-500' : 'text-blue-600'}`}>Carga</span>
-                          <input type="number" inputMode="decimal" value={ex.carga} onChange={e => updateEx(ex.id, 'carga', parseFloat(e.target.value) || 0)} className={`w-full bg-transparent text-center font-black text-sm outline-none ${theme === 'dark' ? 'text-white' : 'text-blue-700'}`} />
-                        </div>
-                      </div>
                     </div>
-                  </div>
+
+                    <main className="max-w-md mx-auto p-4 space-y-4">
+                        {view === 'workout' ? (
+                            <Fragment>
+                                <div className="grid grid-cols-4 gap-2">
+                                    <div className={`col-span-1 flex flex-col items-center justify-center p-3 rounded-2xl border border-dashed ${isTimerActive ? 'border-blue-500/50 bg-blue-500/5 text-blue-500' : 'border-slate-300 opacity-30'}`}>
+                                        <Icon name="Timer" size={16} className={isTimerActive ? 'animate-pulse' : ''} />
+                                        <span className="text-[10px] font-black mt-1">{formatTime(seconds)}</span>
+                                    </div>
+                                    {['Normal', 'Calor', 'Cansado'].map(c => (
+                                        <button key={c} onClick={() => setDayCondition(c)} className={`flex flex-col items-center p-3 rounded-2xl border transition-all ${dayCondition === c ? 'border-blue-500 bg-blue-500/10 text-blue-500 font-bold' : 'border-transparent opacity-30'}`}>
+                                            {c === 'Normal' ? <Icon name="Activity" size={16}/> : c === 'Calor' ? <Icon name="Sun" size={16}/> : <Icon name="BatteryLow" size={16}/>}
+                                            <span className="text-[8px] font-black uppercase mt-1">{c}</span>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className={`flex items-center gap-3 p-4 rounded-3xl ${s.cardEven} border-dashed border-2`}>
+                                    <Icon name="Calendar" size={18} className="text-blue-500" />
+                                    <div className="flex-1">
+                                        <span className="text-[7px] font-black uppercase opacity-50 block">Data do Treino</span>
+                                        <input type="date" value={workoutDate} onChange={(e) => setWorkoutDate(e.target.value)} className="bg-transparent font-black text-xs outline-none w-full" />
+                                    </div>
+                                </div>
+
+                                <div className={`p-4 rounded-3xl bg-black/5 border ${theme === 'dark' ? 'border-slate-800' : 'border-stone-200'}`}>
+                                    <div className="flex justify-between text-[8px] font-black uppercase mb-1 opacity-50">
+                                        <span>Eficiência Diária</span>
+                                        <span>{progress}%</span>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden">
+                                        <div className={`h-full transition-all duration-700 ${progress === 100 ? 'bg-green-500' : (theme === 'dark' ? 'bg-red-600' : 'bg-blue-600')}`} style={{ width: `${progress}%` }} />
+                                    </div>
+                                </div>
+
+                                {exercises[currentTab]?.map((ex, idx) => (
+                                    <div key={ex.id} className={`p-5 rounded-[2.2rem] border transition-all ${ex.concluido ? 'opacity-30 grayscale' : (idx % 2 === 0 ? s.cardEven : s.cardOdd)} ${ex.type === 'prep' ? 'border-dashed' : ''}`}>
+                                        <div className="flex items-start gap-4">
+                                            <button onClick={() => updateEx(ex.id, 'concluido', !ex.concluido)} className={ex.concluido ? 'text-green-500' : (theme === 'dark' ? 'text-slate-600' : 'text-blue-400')}>
+                                                {ex.concluido ? <Icon name="CheckCircle2" size={26}/> : <Icon name="Circle" size={26}/>}
+                                            </button>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex justify-between mb-3">
+                                                    <div className="flex items-center gap-2 w-full pr-4 overflow-hidden">
+                                                        {ex.type === 'prep' && (ex.id.startsWith('w') ? <Icon name="Flame" size={14} className="text-orange-500"/> : <Icon name="Clock" size={14} className="text-blue-500"/>)}
+                                                        <input type="text" value={ex.nome} onChange={(e) => updateEx(ex.id, 'nome', e.target.value)} className="bg-transparent font-black text-sm uppercase tracking-tight outline-none w-full focus:underline truncate" />
+                                                    </div>
+                                                    <div className="flex gap-2 shrink-0">
+                                                        <button onClick={() => setShowHistory(showHistory === ex.id ? null : ex.id)} className="opacity-30"><Icon name="TrendingUp" size={14}/></button>
+                                                        {ex.type !== 'prep' && <button onClick={() => removeExercise(ex.id)} className="opacity-20 text-red-500"><Icon name="Trash2" size={14}/></button>}
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    <div className={`${s.input} p-2 rounded-xl text-center`}>
+                                                        <span className="text-[7px] font-black uppercase opacity-40 block">{ex.type === 'prep' ? 'Min' : 'Sets'}</span>
+                                                        <input type="number" value={ex.series} onChange={(e) => updateEx(ex.id, 'series', parseInt(e.target.value) || 0)} className="bg-transparent text-center font-bold text-xs w-full outline-none" />
+                                                    </div>
+                                                    <div className={`${s.input} p-2 rounded-xl text-center`}>
+                                                        <span className="text-[7px] font-black uppercase opacity-40 block">Reps</span>
+                                                        <input type="number" value={ex.reps} onChange={(e) => updateEx(ex.id, 'reps', parseInt(e.target.value) || 0)} className="bg-transparent text-center font-bold text-xs w-full outline-none" />
+                                                    </div>
+                                                    <div className={`${ex.type === 'prep' ? 'opacity-10 pointer-events-none' : 'bg-blue-500/10 border border-blue-500/20'} p-2 rounded-xl text-center`}>
+                                                        <span className={`text-[7px] font-black uppercase block ${theme === 'dark' ? 'text-red-500' : 'text-blue-600'}`}>Carga</span>
+                                                        <input type="number" inputMode="decimal" value={ex.carga} onChange={e => updateEx(ex.id, 'carga', parseFloat(e.target.value) || 0)} className="w-full bg-transparent text-center font-black text-sm outline-none" />
+                                                    </div>
+                                                </div>
+                                                {showHistory === ex.id && (
+                                                    <div className="mt-3 p-3 bg-black/10 rounded-2xl text-[9px] border border-white/5 animate-in">
+                                                        <p className="opacity-50 font-bold uppercase">Último aumento: {ex.lastIncrease ? new Date(ex.lastIncrease).toLocaleDateString() : "Sem Registo"}</p>
+                                                        <p className="font-black uppercase mt-1 text-blue-500 italic">Analítica ET: Estabiliza a carga antes da titulação.</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                <button onClick={addExercise} className={`w-full py-4 border-2 border-dashed ${theme === 'dark' ? 'border-slate-800 text-slate-600' : 'border-blue-200 text-blue-400'} rounded-[2rem] font-black text-[10px] uppercase flex items-center justify-center gap-2`}><Icon name="Plus" size={16}/> Adicionar Exercício</button>
+                                <button onClick={saveWorkout} className={`w-full py-5 rounded-[2.5rem] font-black text-xs uppercase shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all ${theme === 'dark' ? 'bg-red-700 text-white' : 'bg-blue-600 text-white'}`}><Icon name="Save" size={18}/> Salvar Treino Completo</button>
+                            </Fragment>
+                        ) : (
+                            <div className="space-y-6 animate-in">
+                                <h2 className="text-xl font-black uppercase tracking-tighter flex items-center gap-2">Logs Recentes</h2>
+                                {logs.length === 0 ? <p className="text-center opacity-30 italic py-10">Nenhum registo encontrado.</p> : 
+                                logs.slice(0, 15).map(log => (
+                                    <div key={log.id} className={`${s.cardEven} p-4 rounded-3xl flex justify-between items-center shadow-sm`}>
+                                        <div className="flex-1">
+                                            <p className="font-black text-xs uppercase tracking-tighter">Treino {log.type}</p>
+                                            <p className="text-[8px] font-bold opacity-40 uppercase">{new Date(log.date).toLocaleDateString()} • {log.condition} • {formatTime(log.duration || 0)}</p>
+                                        </div>
+                                        <div className="flex -space-x-1.5">
+                                            {(log.data || []).slice(0,3).map((e, i) => (
+                                                <div key={i} className={`w-6 h-6 rounded-full ${theme === 'dark' ? 'bg-slate-800 border-slate-950' : 'bg-blue-600 border-white'} border-2 flex items-center justify-center text-[7px] font-black text-white shadow-sm`}>{e.carga}</div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </main>
+
+                    <div className={`fixed bottom-0 left-0 right-0 ${s.header} border-t p-4 pb-8 flex justify-around shadow-2xl shadow-black`}>
+                        <button onClick={() => setView('workout')} className={`flex flex-col items-center gap-1 ${view === 'workout' ? (theme === 'dark' ? 'text-red-500' : 'text-blue-600') : 'opacity-20'}`}>
+                            <Icon name="BarChart3" size={20}/><span className="text-[8px] font-black uppercase tracking-widest">Treino</span>
+                        </button>
+                        <button onClick={() => setView('dashboard')} className={`flex flex-col items-center gap-1 ${view === 'dashboard' ? (theme === 'dark' ? 'text-red-500' : 'text-blue-600') : 'opacity-20'}`}>
+                            <Icon name="LayoutDashboard" size={20}/><span className="text-[8px] font-black uppercase tracking-widest">Logs</span>
+                        </button>
+                    </div>
                 </div>
-              );
-            })}
+            );
+        }
 
-            <button onClick={addExercise} className={`w-full py-4 border-2 border-dashed ${theme === 'dark' ? 'border-slate-800 text-slate-600' : 'border-blue-200 text-blue-400'} rounded-[2rem] font-black text-[10px] uppercase flex items-center justify-center gap-2 transition-all`}>
-              <Plus size={16}/> Adicionar Exercício
-            </button>
-
-            <button onClick={saveWorkout} className={`w-full py-5 rounded-[2.5rem] font-black text-xs uppercase shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all ${theme === 'dark' ? 'bg-red-700 text-white' : 'bg-blue-600 text-white'}`}>
-              <Save size={18}/> Consolidar Protocolo
-            </button>
-          </>
-        ) : (
-          <div className="space-y-6">
-            <h2 className="text-xl font-black uppercase tracking-tighter flex items-center gap-2">Performance</h2>
-            <div className={`${s.card} p-6 rounded-[2rem] bg-black/5`}>
-              <p className="text-[9px] font-black uppercase mb-4 opacity-50">Frequência Mensal (6 Meses)</p>
-              <div className="flex items-end gap-2 h-24">
-                {chartData.map(m => (
-                  <div key={m.name} className="flex-1 flex flex-col items-center gap-1">
-                    <div className={`${theme === 'dark' ? 'bg-red-700' : 'bg-blue-600'} w-full rounded-t-lg transition-all duration-1000`} style={{ height: `${Math.min(100, (m.val / 20) * 100)}%` }} />
-                    <span className="text-[7px] font-black uppercase opacity-40">{m.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-3">
-              <p className="text-[9px] font-black uppercase opacity-50 px-2">Logs Recentes</p>
-              {logs.slice(0, 10).map(log => (
-                <div key={log.id} className={`${s.card} p-4 rounded-3xl flex justify-between items-center`}>
-                  <div>
-                    <p className="font-black text-xs uppercase">Treino {log.type}</p>
-                    <p className="text-[8px] font-bold opacity-40 uppercase">{new Date(log.date).toLocaleDateString()} • {formatTime(log.duration)}</p>
-                  </div>
-                  <div className="flex -space-x-1">
-                    {log.data.slice(0,3).map((e, i) => (
-                      <div key={i} className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-[7px] font-black ${theme === 'dark' ? 'bg-slate-800 border-slate-950 text-white' : 'bg-blue-600 border-white text-white'}`}>{e.carga}</div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </main>
-
-      <div className={`fixed bottom-0 left-0 right-0 ${s.header} border-t p-4 pb-8 flex justify-around`}>
-        <button onClick={() => setView('workout')} className={`flex flex-col items-center gap-1 ${view === 'workout' ? (theme === 'dark' ? 'text-red-500' : 'text-blue-600') : 'opacity-30'}`}>
-          <Activity size={20}/><span className="text-[8px] font-black uppercase">Treino</span>
-        </button>
-        <button onClick={() => setView('dashboard')} className={`flex flex-col items-center gap-1 ${view === 'dashboard' ? (theme === 'dark' ? 'text-red-500' : 'text-blue-600') : 'opacity-30'}`}>
-          <LayoutDashboard size={20}/><span className="text-[8px] font-black uppercase">Logs</span>
-        </button>
-      </div>
-    </div>
-  );
-}
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
