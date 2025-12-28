@@ -18,6 +18,9 @@
         input[type="date"]::-webkit-calendar-picker-indicator {
             filter: invert(0.5);
         }
+        /* Teclado numérico otimizado para preenchimento rápido na UTI/Academia */
+        input[type="number"] { -moz-appearance: textfield; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body>
@@ -26,7 +29,7 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef, Fragment } = React;
 
-        // Componente de Ícone Interno corrigido para evitar erro de elementos adjacentes
+        // Componente de Ícone Interno - Construção Segura de SVGs
         const Icon = ({ name, size = 20, className = "" }) => {
             const icons = {
                 History: <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8m0 0V3m0 5h5M12 7v5l4 2" />,
@@ -146,9 +149,10 @@
 
             const s = themeStyles[theme] || themeStyles.dark;
 
+            // Protocolo de Auditoria e Restauração de Dados
             useEffect(() => {
-                const savedConfig = localStorage.getItem('et_force_vercel_config_v5');
-                const savedLogs = localStorage.getItem('et_force_vercel_logs_v5');
+                const savedConfig = localStorage.getItem('et_force_vercel_config_v7');
+                const savedLogs = localStorage.getItem('et_force_vercel_logs_v7');
 
                 if (savedConfig) {
                     const data = JSON.parse(savedConfig);
@@ -156,25 +160,54 @@
                     setDayCondition(data.dayCondition || 'Normal');
                     setTheme(data.theme || 'dark');
                 } else {
-                    const createWorkout = (type) => [
-                        { id: `w_${type}`, nome: "Aquecimento 10 min", series: 1, reps: 10, carga: 0, concluido: false, type: 'prep' },
-                        { id: Date.now() + Math.random(), nome: type === 'A' ? "Leg Press" : "Puxada Alta", series: 3, reps: 12, carga: 10, concluido: false },
-                        { id: `s_${type}`, nome: "Alongamento Final", series: 1, reps: 10, carga: 0, concluido: false, type: 'prep' }
-                    ];
+                    // Inicialização Integral com a Nova Prescrição Solicitada
+                    const createWorkout = (type) => {
+                        const prepItems = [
+                            { id: `w_${type}`, nome: "Aquecimento 10 min", series: 1, reps: 10, carga: 0, concluido: false, type: 'prep' }
+                        ];
+                        const specificExercises = type === 'A' ? [
+                            { id: 'a1', nome: "Leg Press", series: 3, reps: 12, carga: 80, lastIncrease: null, concluido: false },
+                            { id: 'a2', nome: "Supino Inclinado", series: 3, reps: 12, carga: 8, lastIncrease: null, concluido: false },
+                            { id: 'a3', nome: "Supino Reto", series: 3, reps: 12, carga: 9, lastIncrease: null, concluido: false },
+                            { id: 'a4', nome: "Agachamento", series: 3, reps: 12, carga: 4, lastIncrease: null, concluido: false },
+                            { id: 'a5', nome: "Extensão de Joelhos", series: 3, reps: 12, carga: 80, lastIncrease: null, concluido: false },
+                            { id: 'a6', nome: "Tríceps Francês", series: 3, reps: 12, carga: 6, lastIncrease: null, concluido: false },
+                            { id: 'a7', nome: "Abdução", series: 3, reps: 15, carga: 60, lastIncrease: null, concluido: false },
+                            { id: 'a8', nome: "Tríceps Banco", series: 3, reps: 12, carga: 0, lastIncrease: null, concluido: false },
+                            { id: 'a9', nome: "Prancha", series: 3, reps: 1, carga: 0, lastIncrease: null, concluido: false }
+                        ] : [
+                            { id: 'b1', nome: "Remada Baixa", series: 3, reps: 12, carga: 50, lastIncrease: null, concluido: false },
+                            { id: 'b2', nome: "Voador Inverso", series: 3, reps: 12, carga: 40, lastIncrease: null, concluido: false },
+                            { id: 'b3', nome: "Passada Alternada", series: 3, reps: 12, carga: 0, lastIncrease: null, concluido: false },
+                            { id: 'b4', nome: "Panturrilhas Unilateral", series: 3, reps: 15, carga: 0, lastIncrease: null, concluido: false },
+                            { id: 'b5', nome: "Abdução", series: 3, reps: 15, carga: 50, lastIncrease: null, concluido: false },
+                            { id: 'b6', nome: "Bíceps Concentrado", series: 3, reps: 12, carga: 7, lastIncrease: null, concluido: false },
+                            { id: 'b7', nome: "Flexão de Joelhos", series: 3, reps: 15, carga: 70, lastIncrease: null, concluido: false },
+                            { id: 'b8', nome: "Elevação Lateral", series: 3, reps: 12, carga: 4, lastIncrease: null, concluido: false },
+                            { id: 'b9', nome: "Abdominal Oblíquo", series: 3, reps: 20, carga: 0, lastIncrease: null, concluido: false },
+                            { id: 'b10', nome: "Abdominal Remador Alternado", series: 3, reps: 20, carga: 0, lastIncrease: null, concluido: false }
+                        ];
+                        const stretchItems = [
+                            { id: `s_${type}`, nome: "Alongamento Final 10 min", series: 1, reps: 10, carga: 0, concluido: false, type: 'prep' }
+                        ];
+                        return [...prepItems, ...specificExercises, ...stretchItems];
+                    };
                     setExercises({ A: createWorkout('A'), B: createWorkout('B') });
                 }
                 if (savedLogs) setLogs(JSON.parse(savedLogs));
                 setLoading(false);
             }, []);
 
+            // Sincronização em Tempo Real (Offline First)
             useEffect(() => {
-                if (!loading) localStorage.setItem('et_force_vercel_config_v5', JSON.stringify({ exercises, dayCondition, theme }));
+                if (!loading) localStorage.setItem('et_force_vercel_config_v7', JSON.stringify({ exercises, dayCondition, theme }));
             }, [exercises, dayCondition, theme, loading]);
 
             useEffect(() => {
-                if (!loading) localStorage.setItem('et_force_vercel_logs_v5', JSON.stringify(logs));
+                if (!loading) localStorage.setItem('et_force_vercel_logs_v7', JSON.stringify(logs));
             }, [logs, loading]);
 
+            // Cronómetro de Alta Precisão
             useEffect(() => {
                 if (isTimerActive) {
                     timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
@@ -189,6 +222,20 @@
                 setTimeout(() => setMessage(null), 3000);
             };
 
+            // Lógica Médica de Preservação Fisiológica (Titração de Séries)
+            const handleConditionChange = (cond) => {
+                setDayCondition(cond);
+                if (cond === 'Calor' || cond === 'Cansado') {
+                    const updated = { ...exercises };
+                    const limiter = (list) => list.map(e => e.type === 'prep' ? e : ({ ...e, series: Math.min(e.series, 2) }));
+                    updated.A = limiter(updated.A);
+                    updated.B = limiter(updated.B);
+                    setExercises(updated);
+                    notify(`Alerta Fisiológico: Séries limitadas a 2x em modo ${cond}.`);
+                }
+            };
+
+            // Gestão Dinâmica do Plano
             const addExercise = () => {
                 const newEx = { id: Date.now().toString(), nome: "Novo Exercício", series: 3, reps: 12, carga: 0, concluido: false };
                 const updated = { ...exercises };
@@ -196,7 +243,7 @@
                 if (stretchIdx !== -1) updated[currentTab].splice(stretchIdx, 0, newEx);
                 else updated[currentTab].push(newEx);
                 setExercises(updated);
-                notify("Exercício adicionado!");
+                notify("Exercício adicionado à prescrição.");
             };
 
             const removeExercise = (id) => {
@@ -211,12 +258,18 @@
                 const newEx = { ...exercises };
                 const list = [...newEx[currentTab]];
                 const idx = list.findIndex(e => e.id === id);
-                if (field === 'carga' && value > list[idx].carga) list[idx].lastIncrease = new Date().toISOString();
+                
+                // Monitorização de Incremento de Carga
+                if (field === 'carga' && value > list[idx].carga) {
+                    list[idx].lastIncrease = new Date().toISOString();
+                }
+                
                 list[idx][field] = value;
                 newEx[currentTab] = list;
                 setExercises(newEx);
             };
 
+            // Consolidação de Dados de Sessão
             const saveWorkout = () => {
                 const session = {
                     id: Date.now(),
@@ -232,25 +285,37 @@
                 setExercises(newEx);
                 setIsTimerActive(false);
                 setSeconds(0);
-                notify("Treino salvo com sucesso!");
+                notify("Sessão ET consolidada com sucesso!");
             };
 
+            // Analítica e Cálculos
             const formatTime = (s) => `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
             const progress = useMemo(() => {
                 const list = exercises[currentTab] || [];
                 return list.length ? Math.round((list.filter(e => e.concluido).length / list.length) * 100) : 0;
             }, [exercises, currentTab]);
 
+            const getProgressionAdvice = (ex) => {
+                if (ex.type === 'prep') return "Foco metabólico.";
+                if (!ex.lastIncrease) return "Sem dados de titração.";
+                const sessionsWithLoad = logs.filter(l => l.type === currentTab && l.data.some(d => d.id === ex.id && d.carga === ex.carga)).length;
+                if (dayCondition !== 'Normal') return "Manter carga (Fadiga/Calor).";
+                if (sessionsWithLoad >= 3) return "Sugestão: Titular +5% carga.";
+                return `Consolidação: Mais ${3 - sessionsWithLoad} treinos.`;
+            };
+
             if (loading) return null;
 
             return (
                 <div className={`min-h-screen ${s.bg} ${s.text} pb-24 transition-colors duration-500`}>
+                    {/* Toast de Feedback */}
                     {message && (
                         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white px-6 py-2 rounded-full shadow-lg text-xs font-bold animate-bounce">
                             {message}
                         </div>
                     )}
 
+                    {/* Header Protocolar */}
                     <div className={`sticky top-0 z-30 ${s.header} backdrop-blur-md border-b p-4 shadow-sm`}>
                         <div className="max-w-md mx-auto flex justify-between items-center">
                             <div className="flex items-center gap-3">
@@ -259,7 +324,7 @@
                                 </button>
                                 <div>
                                     <h1 className={`text-lg tracking-tighter uppercase leading-none ${s.headerTitle}`}>Plano de Força</h1>
-                                    <p className="text-[8px] font-bold opacity-50 uppercase tracking-widest italic">Assistente ET Vercel</p>
+                                    <p className={`text-[8px] font-bold opacity-50 uppercase tracking-widest italic ${theme === 'dark' ? 'text-white' : ''}`}>Assistente ET - MD Assist</p>
                                 </div>
                             </div>
                             <div className="flex gap-1 bg-black/10 p-1 rounded-xl">
@@ -273,30 +338,33 @@
                     <main className="max-w-md mx-auto p-4 space-y-4">
                         {view === 'workout' ? (
                             <Fragment>
+                                {/* Dashboard de Condição e Tempo */}
                                 <div className="grid grid-cols-4 gap-2">
                                     <div className={`col-span-1 flex flex-col items-center justify-center p-3 rounded-2xl border border-dashed ${isTimerActive ? 'border-blue-500/50 bg-blue-500/5 text-blue-500' : 'border-slate-300 opacity-30'}`}>
                                         <Icon name="Timer" size={16} className={isTimerActive ? 'animate-pulse' : ''} />
                                         <span className="text-[10px] font-black mt-1">{formatTime(seconds)}</span>
                                     </div>
                                     {['Normal', 'Calor', 'Cansado'].map(c => (
-                                        <button key={c} onClick={() => setDayCondition(c)} className={`flex flex-col items-center p-3 rounded-2xl border transition-all ${dayCondition === c ? 'border-blue-500 bg-blue-500/10 text-blue-500 font-bold' : 'border-transparent opacity-30'}`}>
+                                        <button key={c} onClick={() => handleConditionChange(c)} className={`flex flex-col items-center p-3 rounded-2xl border transition-all ${dayCondition === c ? 'border-blue-500 bg-blue-500/10 text-blue-500 font-bold' : 'border-transparent opacity-30'}`}>
                                             {c === 'Normal' ? <Icon name="Activity" size={16}/> : c === 'Calor' ? <Icon name="Sun" size={16}/> : <Icon name="BatteryLow" size={16}/>}
                                             <span className="text-[8px] font-black uppercase mt-1">{c}</span>
                                         </button>
                                     ))}
                                 </div>
 
+                                {/* Auditoria de Data */}
                                 <div className={`flex items-center gap-3 p-4 rounded-3xl ${s.cardEven} border-dashed border-2`}>
                                     <Icon name="Calendar" size={18} className="text-blue-500" />
                                     <div className="flex-1">
-                                        <span className="text-[7px] font-black uppercase opacity-50 block">Data do Treino</span>
-                                        <input type="date" value={workoutDate} onChange={(e) => setWorkoutDate(e.target.value)} className="bg-transparent font-black text-xs outline-none w-full" />
+                                        <span className="text-[7px] font-black uppercase opacity-50 block text-blue-500">Data da Sessão</span>
+                                        <input type="date" value={workoutDate} onChange={(e) => setWorkoutDate(e.target.value)} className={`bg-transparent font-black text-xs outline-none w-full ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`} />
                                     </div>
                                 </div>
 
+                                {/* Barra de Eficiência */}
                                 <div className={`p-4 rounded-3xl bg-black/5 border ${theme === 'dark' ? 'border-slate-800' : 'border-stone-200'}`}>
                                     <div className="flex justify-between text-[8px] font-black uppercase mb-1 opacity-50">
-                                        <span>Eficiência Diária</span>
+                                        <span>Conclusão do Plano</span>
                                         <span>{progress}%</span>
                                     </div>
                                     <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden">
@@ -304,6 +372,7 @@
                                     </div>
                                 </div>
 
+                                {/* Lista de Exercícios Prescritos */}
                                 {exercises[currentTab]?.map((ex, idx) => (
                                     <div key={ex.id} className={`p-5 rounded-[2.2rem] border transition-all ${ex.concluido ? 'opacity-30 grayscale' : (idx % 2 === 0 ? s.cardEven : s.cardOdd)} ${ex.type === 'prep' ? 'border-dashed' : ''}`}>
                                         <div className="flex items-start gap-4">
@@ -314,31 +383,31 @@
                                                 <div className="flex justify-between mb-3">
                                                     <div className="flex items-center gap-2 w-full pr-4 overflow-hidden">
                                                         {ex.type === 'prep' && (ex.id.startsWith('w') ? <Icon name="Flame" size={14} className="text-orange-500"/> : <Icon name="Clock" size={14} className="text-blue-500"/>)}
-                                                        <input type="text" value={ex.nome} onChange={(e) => updateEx(ex.id, 'nome', e.target.value)} className="bg-transparent font-black text-sm uppercase tracking-tight outline-none w-full focus:underline truncate" />
+                                                        <input type="text" value={ex.nome} onChange={(e) => updateEx(ex.id, 'nome', e.target.value)} className={`bg-transparent font-black text-sm uppercase tracking-tight outline-none w-full focus:underline truncate ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`} />
                                                     </div>
                                                     <div className="flex gap-2 shrink-0">
-                                                        <button onClick={() => setShowHistory(showHistory === ex.id ? null : ex.id)} className="opacity-30"><Icon name="TrendingUp" size={14}/></button>
-                                                        {ex.type !== 'prep' && <button onClick={() => removeExercise(ex.id)} className="opacity-20 text-red-500"><Icon name="Trash2" size={14}/></button>}
+                                                        <button onClick={() => setShowHistory(showHistory === ex.id ? null : ex.id)} className="opacity-30 p-1"><Icon name="TrendingUp" size={14}/></button>
+                                                        {ex.type !== 'prep' && <button onClick={() => removeExercise(ex.id)} className="opacity-20 text-red-500 p-1"><Icon name="Trash2" size={14}/></button>}
                                                     </div>
                                                 </div>
                                                 <div className="grid grid-cols-3 gap-2">
                                                     <div className={`${s.input} p-2 rounded-xl text-center`}>
                                                         <span className="text-[7px] font-black uppercase opacity-40 block">{ex.type === 'prep' ? 'Min' : 'Sets'}</span>
-                                                        <input type="number" value={ex.series} onChange={(e) => updateEx(ex.id, 'series', parseInt(e.target.value) || 0)} className="bg-transparent text-center font-bold text-xs w-full outline-none" />
+                                                        <input type="number" inputMode="numeric" value={ex.series} onChange={(e) => updateEx(ex.id, 'series', parseInt(e.target.value) || 0)} className="bg-transparent text-center font-bold text-xs w-full outline-none" />
                                                     </div>
                                                     <div className={`${s.input} p-2 rounded-xl text-center`}>
                                                         <span className="text-[7px] font-black uppercase opacity-40 block">Reps</span>
-                                                        <input type="number" value={ex.reps} onChange={(e) => updateEx(ex.id, 'reps', parseInt(e.target.value) || 0)} className="bg-transparent text-center font-bold text-xs w-full outline-none" />
+                                                        <input type="number" inputMode="numeric" value={ex.reps} onChange={(e) => updateEx(ex.id, 'reps', parseInt(e.target.value) || 0)} className="bg-transparent text-center font-bold text-xs w-full outline-none" />
                                                     </div>
                                                     <div className={`${ex.type === 'prep' ? 'opacity-10 pointer-events-none' : 'bg-blue-500/10 border border-blue-500/20'} p-2 rounded-xl text-center`}>
                                                         <span className={`text-[7px] font-black uppercase block ${theme === 'dark' ? 'text-red-500' : 'text-blue-600'}`}>Carga</span>
-                                                        <input type="number" inputMode="decimal" value={ex.carga} onChange={e => updateEx(ex.id, 'carga', parseFloat(e.target.value) || 0)} className="w-full bg-transparent text-center font-black text-sm outline-none" />
+                                                        <input type="number" inputMode="decimal" value={ex.carga} onChange={e => updateEx(ex.id, 'carga', parseFloat(e.target.value) || 0)} className={`w-full bg-transparent text-center font-black text-sm outline-none ${theme === 'dark' ? 'text-white' : 'text-blue-700'}`} />
                                                     </div>
                                                 </div>
                                                 {showHistory === ex.id && (
                                                     <div className="mt-3 p-3 bg-black/10 rounded-2xl text-[9px] border border-white/5 animate-in">
-                                                        <p className="opacity-50 font-bold uppercase">Último aumento: {ex.lastIncrease ? new Date(ex.lastIncrease).toLocaleDateString() : "Sem Registo"}</p>
-                                                        <p className="font-black uppercase mt-1 text-blue-500 italic">Analítica ET: Estabiliza a carga antes da titulação.</p>
+                                                        <p className="opacity-50 font-bold uppercase">Última Titração: {ex.lastIncrease ? new Date(ex.lastIncrease).toLocaleDateString() : "Sem Registo"}</p>
+                                                        <p className="font-black uppercase mt-1 text-blue-500 italic">ET Analytics: {getProgressionAdvice(ex)}</p>
                                                     </div>
                                                 )}
                                             </div>
@@ -346,22 +415,22 @@
                                     </div>
                                 ))}
 
-                                <button onClick={addExercise} className={`w-full py-4 border-2 border-dashed ${theme === 'dark' ? 'border-slate-800 text-slate-600' : 'border-blue-200 text-blue-400'} rounded-[2rem] font-black text-[10px] uppercase flex items-center justify-center gap-2`}><Icon name="Plus" size={16}/> Adicionar Exercício</button>
-                                <button onClick={saveWorkout} className={`w-full py-5 rounded-[2.5rem] font-black text-xs uppercase shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all ${theme === 'dark' ? 'bg-red-700 text-white' : 'bg-blue-600 text-white'}`}><Icon name="Save" size={18}/> Salvar Treino Completo</button>
+                                <button onClick={addExercise} className={`w-full py-4 border-2 border-dashed ${theme === 'dark' ? 'border-slate-800 text-slate-600' : 'border-blue-200 text-blue-400'} rounded-[2rem] font-black text-[10px] uppercase flex items-center justify-center gap-2 active:scale-95 transition-all`}><Icon name="Plus" size={16}/> Adicionar Exercício</button>
+                                <button onClick={saveWorkout} className={`w-full py-5 rounded-[2.5rem] font-black text-xs uppercase shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all ${theme === 'dark' ? 'bg-red-700 text-white shadow-red-900/40' : 'bg-blue-600 text-white shadow-blue-200'}`}><Icon name="Save" size={18}/> Finalizar Protocolo ET</button>
                             </Fragment>
                         ) : (
                             <div className="space-y-6 animate-in">
-                                <h2 className="text-xl font-black uppercase tracking-tighter flex items-center gap-2">Logs Recentes</h2>
-                                {logs.length === 0 ? <p className="text-center opacity-30 italic py-10">Nenhum registo encontrado.</p> : 
-                                logs.slice(0, 15).map(log => (
+                                <h2 className={`text-xl font-black uppercase tracking-tighter flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>Histórico Recente</h2>
+                                {logs.length === 0 ? <p className="text-center opacity-30 italic py-10">Nenhum registo consolidado no dispositivo.</p> : 
+                                logs.slice(0, 20).map(log => (
                                     <div key={log.id} className={`${s.cardEven} p-4 rounded-3xl flex justify-between items-center shadow-sm`}>
                                         <div className="flex-1">
-                                            <p className="font-black text-xs uppercase tracking-tighter">Treino {log.type}</p>
+                                            <p className={`font-black text-xs uppercase tracking-tighter ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>Treino {log.type}</p>
                                             <p className="text-[8px] font-bold opacity-40 uppercase">{new Date(log.date).toLocaleDateString()} • {log.condition} • {formatTime(log.duration || 0)}</p>
                                         </div>
                                         <div className="flex -space-x-1.5">
-                                            {(log.data || []).slice(0,3).map((e, i) => (
-                                                <div key={i} className={`w-6 h-6 rounded-full ${theme === 'dark' ? 'bg-slate-800 border-slate-950' : 'bg-blue-600 border-white'} border-2 flex items-center justify-center text-[7px] font-black text-white shadow-sm`}>{e.carga}</div>
+                                            {(log.data || []).slice(0,4).map((e, i) => (
+                                                <div key={i} className={`w-6 h-6 rounded-full ${theme === 'dark' ? 'bg-slate-800 border-slate-950 text-white' : 'bg-blue-600 border-white'} border-2 flex items-center justify-center text-[7px] font-black text-white shadow-sm`}>{e.carga}</div>
                                             ))}
                                         </div>
                                     </div>
@@ -370,7 +439,8 @@
                         )}
                     </main>
 
-                    <div className={`fixed bottom-0 left-0 right-0 ${s.header} border-t p-4 pb-8 flex justify-around shadow-2xl shadow-black`}>
+                    {/* Nav Navegação Inferior */}
+                    <div className={`fixed bottom-0 left-0 right-0 ${s.header} border-t p-4 pb-8 flex justify-around shadow-2xl`}>
                         <button onClick={() => setView('workout')} className={`flex flex-col items-center gap-1 ${view === 'workout' ? (theme === 'dark' ? 'text-red-500' : 'text-blue-600') : 'opacity-20'}`}>
                             <Icon name="BarChart3" size={20}/><span className="text-[8px] font-black uppercase tracking-widest">Treino</span>
                         </button>
